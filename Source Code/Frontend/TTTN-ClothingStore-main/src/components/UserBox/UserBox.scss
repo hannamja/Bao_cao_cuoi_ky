@@ -1,0 +1,31 @@
+.userBox {
+    width: 200px;
+    right: 20px;
+    top: 80px;
+    background-color: white;
+    -webkit-box-shadow: 0px 0px 7px -5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0px 0px 7px -5px rgba(0, 0, 0, 0.5);
+    .link {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #999;
+        padding: 10px 5px;
+    }
+
+    .bottom {
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 5px;
+        }
+    }
+
+}
