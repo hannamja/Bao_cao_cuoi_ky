@@ -8,6 +8,7 @@
     "@fortawesome/fontawesome-free": "^6.4.0",
     "@mui/icons-material": "^5.10.15",
     "@mui/material": "^5.13.6",
+    "@mui/x-data-grid": "^6.16.2",
     "@popperjs/core": "^2.11.8",
     "@reduxjs/toolkit": "^1.9.0",
     "@stripe/stripe-js": "^1.44.1",
@@ -16,6 +17,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.2.0",
     "bootstrap": "^5.3.0",
+    "formik": "^2.4.5",
     "install": "^0.13.0",
     "jwt-decode": "^3.1.2",
     "npm": "^9.1.2",
@@ -36,12 +38,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -53,9 +49,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "eslint": "^8.51.0",
-    "eslint-plugin-react": "^7.33.2"
   }
 }

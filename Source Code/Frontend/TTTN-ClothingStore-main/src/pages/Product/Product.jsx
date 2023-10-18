@@ -14,22 +14,24 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/cartReducer";
 import RatingSection from "../../components/RatingSection/RatingSection";
+import { Alert, Snackbar } from "@mui/material";
 
 const Product = () => {
   const id = useParams().id;
   const [selectedImg, setSelectedImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [idCtmh, setIdCtmh] = React.useState(null);
-
-  const handleChange = (event) => {
-    setIdCtmh(event.target.value);
-    setQuantity(1);
-  };
   const dispatch = useDispatch();
   const { data, loading, error } = useFetch(`/mathang/${id}`);
   const user = useSelector(state => state.user)
   const [hds, setHds] = useState(null)
-
+  const [openSuccess, setOpenSuccess] = React.useState(false);
+  const handleCloseSuccess = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setOpenSuccess(false);
+  };
   useEffect(() => {
     if (Object.keys(user).length !== 0) {
       if (user.info.khachhang !== null) {
@@ -43,22 +45,6 @@ const Product = () => {
       }
     }
   }, [])
-  const [km, setKm] = useState(0)
-  useEffect(() => {
-    if (data) {
-      if (data.chitietKhuyenmaiDTO) {
-        if (data.chitietKhuyenmaiDTO.mucgiam == '10%') setKm(0.1)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '20%') setKm(0.2)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '30%') setKm(0.3)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '40%') setKm(0.4)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '50%') setKm(0.5)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '60%') setKm(0.6)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '70%') setKm(0.7)
-        if (data.chitietKhuyenmaiDTO.mucgiam == '80%') setKm(0.8)
-      }
-
-    }
-  }, [loading])
 
   const checkBuy = (item) => {
     const filtered = hds.filter(i => i.chitietHoadonDTO.filter(ii => ii.chitietMathangDTO.mathangDTO.mamh === parseInt(item)).length !== 0)
@@ -67,6 +53,53 @@ const Product = () => {
     }
     return false
   }
+
+  const handleAddToCart = () => {
+    if (idCtmh == null) {
+      alert('Vui lòng chọn phân loại mặt hàng')
+      return
+    }
+    dispatch(
+      addToCart({
+        id: data.mamh,
+        title: data.tenmh,
+        desc: data.mota,
+        img: data.hinhanhDTOs.length === 0 ? '' : data.hinhanhDTOs[0].duongdan,
+        "hoadonDTO": {
+          "khachhang": null,
+          "nhanvien": null,
+          "ngaytao": null,
+          "tongtien": null,
+          "chitietTrangThaiDTO": null,
+          "chitietHoadonDTO": null
+        },
+        "chitietMathangDTO": {
+          ...data.ctMathangs[idCtmh],
+          "mathangDTO": {
+            "mamh": data.mamh,
+            "chatlieuDTO": null,
+            "loaimhDTO": null,
+            "nhanhieuDTO": null,
+            "tenmh": data.tenmh,
+            "mota": null,
+            "trangthai": null,
+            "cachlam": null,
+            "phanloai": null,
+            "gia": null,
+            "hinhanhDTOs": null,
+            "ctMathangs": null
+          }
+        },
+        quantity,
+        price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * 0.1) * quantity,
+      })
+    )
+    setOpenSuccess(true)
+  }
+  const handleChange = (event) => {
+    setIdCtmh(event.target.value);
+    setQuantity(1);
+  };
   return (
     <div className="product">
       {loading ? (
@@ -109,11 +142,11 @@ const Product = () => {
           </div>
           <div className="right">
             <h1>{data?.tenmh}</h1>
-            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `$${data.gia}`}</span>
-            <span className="price">${data?.gia - data.gia * km}</span>
+            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `$${data.gia - data.gia * 0.1}`}</span>
+            <span className="price">${data?.gia}</span>
             <p>{data?.mota}</p>
-            <Box sx={{ width: 150 }}>
-              <FormControl fullWidth>
+            <Box sx={{ width: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FormControl sx={{ width: 150 }}>
                 <InputLabel id="demo-simple-select-label">Phân loại đồ</InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
@@ -124,11 +157,16 @@ const Product = () => {
                 >
                   {
                     data.ctMathangs.map((ct, index) => (
-                      <MenuItem value={index}>{ct.color} - {ct.size}</MenuItem>
+                      <MenuItem value={index}>{ct.colorDTO.tencolor} - {ct.sizeDTO.tensize}</MenuItem>
                     ))
                   }
                 </Select>
               </FormControl>
+              {
+                idCtmh == null ? <></> : <div>
+                  Còn sẵn: {data.ctMathangs[idCtmh].currentNumbeer}
+                </div>
+              }
             </Box>
             {Object.keys(user).length === 0 ? <>
               <div className="quantity">
@@ -148,86 +186,12 @@ const Product = () => {
                   <button
                     disabled={data.ctMathangs.length === 0}
                     className="add"
-                    onClick={() =>
-                      dispatch(
-                        addToCart({
-                          id: data.mamh,
-                          title: data.tenmh,
-                          desc: data.mota,
-                          img: data.hinhanhDTOs[0].duongdan,
-                          "hoadonDTO": {
-                            "khachhang": null,
-                            "nhanvien": null,
-                            "ngaytao": null,
-                            "tongtien": null,
-                            "chitietTrangThaiDTO": null,
-                            "chitietHoadonDTO": null
-                          },
-                          "chitietMathangDTO": {
-                            ...data.ctMathangs[idCtmh],
-                            "mathangDTO": {
-                              "mamh": data.mamh,
-                              "chatlieuDTO": null,
-                              "loaimhDTO": null,
-                              "nhanhieuDTO": null,
-                              "tenmh": data.tenmh,
-                              "mota": null,
-                              "trangthai": null,
-                              "cachlam": null,
-                              "phanloai": null,
-                              "gia": null,
-                              "hinhanhDTOs": null,
-                              "ctMathangs": null
-                            }
-                          },
-                          quantity,
-                          price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * km) * quantity,
-                        })
-                      )
-                    }
                   >
                     <AddShoppingCartIcon /> OUT OF STOCK
                   </button>
                   : <button
                     className="add"
-                    disabled={idCtmh === null}
-                    onClick={() =>
-                      dispatch(
-                        addToCart({
-                          id: data.mamh,
-                          title: data.tenmh,
-                          desc: data.mota,
-                          img: data.hinhanhDTOs.length === 0 ? '' : data.hinhanhDTOs[0].duongdan,
-                          "hoadonDTO": {
-                            "khachhang": null,
-                            "nhanvien": null,
-                            "ngaytao": null,
-                            "tongtien": null,
-                            "chitietTrangThaiDTO": null,
-                            "chitietHoadonDTO": null
-                          },
-                          "chitietMathangDTO": {
-                            ...data.ctMathangs[idCtmh],
-                            "mathangDTO": {
-                              "mamh": data.mamh,
-                              "chatlieuDTO": null,
-                              "loaimhDTO": null,
-                              "nhanhieuDTO": null,
-                              "tenmh": data.tenmh,
-                              "mota": null,
-                              "trangthai": null,
-                              "cachlam": null,
-                              "phanloai": null,
-                              "gia": null,
-                              "hinhanhDTOs": null,
-                              "ctMathangs": null
-                            }
-                          },
-                          quantity,
-                          price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * km) * quantity,
-                        })
-                      )
-                    }
+                    onClick={handleAddToCart}
                   >
                     <AddShoppingCartIcon /> ADD TO CART
                   </button>
@@ -260,86 +224,12 @@ const Product = () => {
                       <button
                         disabled={data.ctMathangs.length === 0}
                         className="add"
-                        onClick={() =>
-                          dispatch(
-                            addToCart({
-                              id: data.mamh,
-                              title: data.tenmh,
-                              desc: data.mota,
-                              img: data.hinhanhDTOs[0].duongdan,
-                              "hoadonDTO": {
-                                "khachhang": null,
-                                "nhanvien": null,
-                                "ngaytao": null,
-                                "tongtien": null,
-                                "chitietTrangThaiDTO": null,
-                                "chitietHoadonDTO": null
-                              },
-                              "chitietMathangDTO": {
-                                ...data.ctMathangs[idCtmh],
-                                "mathangDTO": {
-                                  "mamh": data.mamh,
-                                  "chatlieuDTO": null,
-                                  "loaimhDTO": null,
-                                  "nhanhieuDTO": null,
-                                  "tenmh": data.tenmh,
-                                  "mota": null,
-                                  "trangthai": null,
-                                  "cachlam": null,
-                                  "phanloai": null,
-                                  "gia": null,
-                                  "hinhanhDTOs": null,
-                                  "ctMathangs": null
-                                }
-                              },
-                              quantity,
-                              price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * km) * quantity,
-                            })
-                          )
-                        }
                       >
                         <AddShoppingCartIcon /> OUT OF STOCK
                       </button>
                       : <button
-                        disabled={idCtmh === null}
                         className="add"
-                        onClick={() =>
-                          dispatch(
-                            addToCart({
-                              id: data.mamh,
-                              title: data.tenmh,
-                              desc: data.mota,
-                              img: data.hinhanhDTOs.length === 0 ? '' : data.hinhanhDTOs[0].duongdan,
-                              "hoadonDTO": {
-                                "khachhang": null,
-                                "nhanvien": null,
-                                "ngaytao": null,
-                                "tongtien": null,
-                                "chitietTrangThaiDTO": null,
-                                "chitietHoadonDTO": null
-                              },
-                              "chitietMathangDTO": {
-                                ...data.ctMathangs[idCtmh],
-                                "mathangDTO": {
-                                  "mamh": data.mamh,
-                                  "chatlieuDTO": null,
-                                  "loaimhDTO": null,
-                                  "nhanhieuDTO": null,
-                                  "tenmh": data.tenmh,
-                                  "mota": null,
-                                  "trangthai": null,
-                                  "cachlam": null,
-                                  "phanloai": null,
-                                  "gia": null,
-                                  "hinhanhDTOs": null,
-                                  "ctMathangs": null
-                                }
-                              },
-                              quantity,
-                              price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * km) * quantity,
-                            })
-                          )
-                        }
+                        onClick={handleAddToCart}
                       >
                         <AddShoppingCartIcon /> ADD TO CART
                       </button>
@@ -371,6 +261,15 @@ const Product = () => {
           </div>
         </>
       )}
+      <Snackbar open={openSuccess} autoHideDuration={6000} onClose={handleCloseSuccess}>
+        <Alert
+          onClose={handleCloseSuccess}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          Đã thêm vào giỏ
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

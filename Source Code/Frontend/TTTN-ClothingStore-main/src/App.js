@@ -102,11 +102,11 @@ function App() {
         },
         {
           path: "/signin",
-          element: Object.keys(user).length === 0 ? <SignInSide /> : <Navigate to='/' />,
+          element: <SignInSide />,
         },
         {
           path: "/signup",
-          element: Object.keys(user).length === 0 ? <SignUp /> : <Navigate to='/' />,
+          element: <SignUp />,
         },
         {
           path: "/forgot",
@@ -143,11 +143,11 @@ function App() {
         },
         {
           path: "/signin",
-          element: Object.keys(user).length === 0 ? <SignInSide /> : <Navigate to='/' />,
+          element: <SignInSide />,
         },
         {
           path: "/signup",
-          element: Object.keys(user).length === 0 ? <SignUp /> : <Navigate to='/' />,
+          element: <SignUp />,
         },
         {
           path: "/forgot",
@@ -214,11 +214,11 @@ function App() {
         },
         {
           path: "/signin",
-          element: Object.keys(user).length === 0 ? <SignInSide /> : <Navigate to='/' />,
+          element: <SignInSide />,
         },
         {
           path: "/signup",
-          element: Object.keys(user).length === 0 ? <SignUp /> : <Navigate to='/' />,
+          element: <SignUp />,
         },
         {
           path: "/forgot",
@@ -475,15 +475,15 @@ function App() {
     if (Object.keys(user).length !== 0) {
       let token = user.token;
       let decodedToken = jwt_decode(token);
-      console.log("Decoded Token", decodedToken);
+      // console.log("Decoded Token", decodedToken);
       let currentDate = new Date();
 
       // JWT exp is in seconds
       if (decodedToken.exp * 1000 < currentDate.getTime()) {
-        console.log("Token expired.");
+        // console.log("Token expired.");
         dispatch(logout())
       } else {
-        console.log("Valid token");
+        // console.log("Valid token");
       }
     }
   }, [])
