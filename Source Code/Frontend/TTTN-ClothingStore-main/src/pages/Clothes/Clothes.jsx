@@ -45,7 +45,7 @@ const initialErrors = {
 
 const initialMessage = {
   content: "",
-  type: "error",
+  type: "",
 };
 
 const Clothes = ({ type }) => {
@@ -80,27 +80,14 @@ const Clothes = ({ type }) => {
   const [url, setUrl] = useState("");
   const [ctmhRows, setCtmhRows] = React.useState([]);
   const [haRows, setHaRows] = React.useState([]);
+  if (sl == 0)
+    setSl(1);
 
-  const [openSuccess, setOpenSuccess] = React.useState(false);
-  const handleCloseSuccess = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setOpenSuccess(false);
-  };
-
-  const [openErr, setOpenErr] = React.useState(false);
-  const handleCloseErr = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setOpenErr(false);
-  };
   const handleCloseMesssage = (event, reason) => {
     if (reason === "clickaway") {
       return;
     }
-    setMessage(initialMessage);
+    setMessage((m) => ({ ...m, content: "" }));
   };
 
   const validate = () => {
@@ -141,10 +128,13 @@ const Clothes = ({ type }) => {
     setCl("");
     setBrand("");
     setLoai("");
-    // ctmh
+    // ctmh input
     setColor("");
     setSize("");
     setSl(0);
+    // ctmh & hinh anh
+    setCtmhRows([]);
+    setHaRows([]);
   };
 
   const handleAdd = () => {
@@ -186,13 +176,11 @@ const Clothes = ({ type }) => {
               content: data.message,
               type: "success",
             });
-            setOpenSuccess(true);
           } else {
             setMessage({
               content: data.message,
               type: "error",
             });
-            setOpenErr(true);
           }
           resetForm();
         });
@@ -235,14 +223,23 @@ const Clothes = ({ type }) => {
         .then((res) => res.json())
         .then((data) => {
           console.log(data);
+          if (data.errCode === "SAVE_SUCCESS") {
+            setMessage({
+              content: data.message,
+              type: "success",
+            });
+          } else {
+            setMessage({
+              content: data.message,
+              type: "error",
+            });
+          }
         });
     }
   };
 
   useEffect(() => {
-    console.log("effect");
     if (data) {
-      console.log(data);
       if (type !== "add") {
         setMamh(data.mamh);
         setLoai(data.loaimhDTO.maloaimh);
@@ -269,24 +266,35 @@ const Clothes = ({ type }) => {
   const handleDelCtmh = (i) => {
     const filtered = ctmhRows.filter(
       (item) =>
-        item.id !== i.id &&
-        item.id !== i.id
+        item.colorDTO.macolor != i.colorDTO.macolor ||
+        item.sizeDTO.masize != i.sizeDTO.masize
     );
     setCtmhRows(filtered);
   };
 
   const handleAddCtmh = (i) => {
-    if (!i.colorDTO || !i.sizeDTO || parseInt(i.currentNumbeer) < 0) {
+    if (
+      !i.colorDTO ||
+      !i.sizeDTO ||
+      !Number.isInteger(parseInt(i.currentNumbeer))
+    ) {
       setMessage({
         content: "Vui lòng nhập đúng đủ màu, kích thước, số lượng!",
         type: "error",
       });
       return;
     }
+    if (parseInt(i.currentNumbeer) < 0) {
+      setMessage({
+        content: "Số lượng không được nhỏ hơn 0!",
+        type: "error",
+      });
+      return;
+    }
     let filtered = ctmhRows.filter(
       (item) =>
-        item.id === i.colorDTO.id &&
-        item.id === i.sizeDTO.id
+        item.colorDTO.macolor == i.colorDTO.macolor &&
+        item.sizeDTO.masize == i.sizeDTO.masize
     );
 
     if (filtered.length > 0) {
@@ -367,7 +375,6 @@ const Clothes = ({ type }) => {
                 return (
                   <MenuItem key={i} value={e}>
                     {e.ttName}
-
                   </MenuItem>
                 );
               })}
@@ -603,6 +610,7 @@ const Clothes = ({ type }) => {
               variant="outlined"
               type="number"
               onChange={(e) => setSl(e.target.value)}
+              InputProps={{ inputProps: { min: 1 } }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -698,8 +706,8 @@ const Clothes = ({ type }) => {
               onClick={
                 type === "add"
                   ? () => {
-                    handleAdd();
-                  }
+                      handleAdd();
+                    }
                   : handleMod
               }
             >
@@ -709,33 +717,8 @@ const Clothes = ({ type }) => {
         )}
       </Grid>
       <Snackbar
-        open={openSuccess}
-        autoHideDuration={6000}
-        onClose={handleCloseSuccess}
-      >
-        <Alert
-          onClose={handleCloseSuccess}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          {type === "add" ? message.content : "Sửa quần áo thành công!"}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar open={openErr} autoHideDuration={6000} onClose={handleCloseErr}>
-        <Alert
-          onClose={handleCloseErr}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          {message.content}
-        </Alert>
-      </Snackbar>
-
-      {/* Message */}
-      <Snackbar
         open={!!message.content}
-        autoHideDuration={3000}
+        autoHideDuration={6000}
         onClose={handleCloseMesssage}
       >
         <Alert
@@ -743,7 +726,7 @@ const Clothes = ({ type }) => {
           severity={message.type}
           sx={{ width: "100%" }}
         >
-          {message.content}
+          {type === "add" ? message.content : message.content}
         </Alert>
       </Snackbar>
     </React.Fragment>
