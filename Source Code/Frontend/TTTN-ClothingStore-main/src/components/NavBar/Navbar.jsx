@@ -10,6 +10,8 @@ import { useSelector } from "react-redux";
 import SearchBox from "../SearchBox/SearchBox";
 import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
 import UserBox from "../UserBox/UserBox";
+import DropDownPhanLoai from "../DropDownPhanLoai/DropDownPhanLoai";
+
 const NavBar = () => {
   const [open, setOpen] = useState(false)
   const [openSearch, setOpenSearch] = useState(false)
@@ -28,15 +30,7 @@ const NavBar = () => {
               <span>VND</span>
               <KeyboardArrowDownIcon />
             </div>
-            <div className="item">
-              <Link className="link" to="/products/2">ÁO SƠ MI</Link>
-            </div>
-            <div className="item">
-              <Link className="link" to="/products/5">QUẦN TÂY</Link>
-            </div>
-            <div className="item">
-              <Link className="link" to="/products/1">ÁO THUN</Link>
-            </div>
+            <DropDownPhanLoai />
           </div>
           <div className="center">
             <Link className="link" to="/">HUKISTORE</Link>

@@ -1,33 +1,34 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
-import { Alert, Button, Input, Snackbar } from '@mui/material';
+import { Button } from '@mui/material';
 import './Brand.scss'
 import useFetchAdmin from '../../hooks/useFetchAdmin';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import AlertMessage from "../../components/AlertMessage";
+
+const initialMessage = {
+    content: "",
+    type: "",
+};
+
 const Brand = ({ type }) => {
     const { id } = useParams()
     const { data, loading, error } = useFetchAdmin(`${type === 'add' ? `` : `/nhanhieu/` + id}`);
-    const [open, setOpen] = React.useState(false);
-    const handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
+    
+    const user = useSelector(state => state.user)
 
-        setOpen(false);
-    };
-    const [open1, setOpen1] = React.useState(false);
-    const handleClose1 = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-
-        setOpen1(false);
-    };
+    const [ten, setTen] = useState('')
+    const [message, setMessage] = useState(initialMessage);
+    
     const handleAdd = () => {
+        if (!ten.trim()) {
+            setMessage({content: "Vui lòng nhập tên nhãn hiệu!", type: "warning"})
+            return;
+        }
         const nh = {
-            "tennh": ten
+            "tennh": ten.trim()
         }
 
         fetch('http://localhost:8081/api/nhanhieu', {
@@ -39,11 +40,16 @@ const Brand = ({ type }) => {
             },
             body: JSON.stringify(nh)
         }).then(res => res.json()).then(()=>{
-            setOpen(true)
+            setMessage({content: "Thêm nhãn hiệu thành công!", type: "success"})
+            setTen("");
         })
     }
 
     const handleMod = () => {
+        if (!ten.trim()) {
+            setMessage({content: "Vui lòng nhập tên nhãn hiệu!", type: "warning"})
+            return;
+        }
         const nh = {
             "manh": data.manh,
             "tennh": ten
@@ -58,17 +64,15 @@ const Brand = ({ type }) => {
             },
             body: JSON.stringify(nh)
         }).then(res => res.json()).then(()=>{
-            setOpen1(true)
+            setMessage({content: "Sửa nhãn hiệu thành công!", type: "success"})
         })
     }
 
-    const user = useSelector(state => state.user)
-    const [ten, setTen] = useState('')
     useEffect(() => {
         if (data) setTen(data.tennh)
     }, [loading])
     return (
-        <React.Fragment>
+        <>
             <Grid container spacing={3} style={{ margin: '50px', alignItems: 'center' }}>
                 <Grid xs={12} sm={12}>
                     <img
@@ -105,7 +109,7 @@ const Brand = ({ type }) => {
                         </Grid>
                 }
             </Grid>
-            <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+            {/* <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
                 <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
                     Thêm nhãn hiệu thành công!
                 </Alert>
@@ -114,8 +118,9 @@ const Brand = ({ type }) => {
                 <Alert onClose={handleClose1} severity="success" sx={{ width: '100%' }}>
                     Sửa nhãn hiệu thành công!
                 </Alert>
-            </Snackbar>
-        </React.Fragment>
+            </Snackbar> */}
+            <AlertMessage message={message} setMessage={setMessage} />
+        </>
     )
 }
 
