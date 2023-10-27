@@ -8,13 +8,13 @@ import { Link } from "react-router-dom";
 import { handleMoney } from "../../utilities/handleMoney";
 
 const Cart = ({ open }) => {
-  const products = useSelector((state) => state.cart.products);
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user)
-
+  const cart = useSelector((state) => state.cart.carts);
+  const userCart = Object.keys(user) == 0 || user.info.khachhang == null ? cart.find(i => i.id == '') : cart.find(i => i.id == user.info.khachhang.makh)
   const totalPrice = () => {
     let total = 0;
-    products.forEach((item) => {
+    userCart.products.forEach((item) => {
       total += item.quantity * item.price;
     });
     return total;
@@ -23,42 +23,45 @@ const Cart = ({ open }) => {
   return (
     <div className="cart">
       <h1>Products in your cart</h1>
-      {products?.map((item) => (
+      {userCart.products?.map((item) => (
         <div className="item" key={item.id}>
           <img src={item.img} alt="" />
           <div className="details">
             <h1>{item.title}</h1>
             <p>{item.desc?.substring(0, 100)}</p>
             <div className="price">
-              {item.quantity} x ${handleMoney(item.price)}
+              {item.quantity} x {handleMoney(item.price)} VND
             </div>
           </div>
           <div className="quantity">
             <button className="quantityBtn"
-              onClick={() => dispatch(minus(item))}
+              onClick={() => dispatch(minus({ idU: user.info.khachhang.makh, item: item }))}
             >
               -
             </button>
             {item.quantity}
-            <button className="quantityBtn" onClick={() => dispatch(add(item))}>+</button>
+            <button className="quantityBtn" onClick={() => dispatch(add({ idU: user.info.khachhang.makh, item: item }))}>
+              +
+            </button>
             <DeleteOutlinedIcon
               className="delete"
-              onClick={() => dispatch(removeItem(item.chitietMathangDTO.id))}
+              onClick={() => dispatch(removeItem({ idU: user.info.khachhang.makh, id: item.chitietMathangDTO.id }))}
             />
           </div>
         </div>
-      ))}
+      ))
+      }
       <div className="total">
         <span>SUBTOTAL</span>
-        <span>${handleMoney(totalPrice())}</span>
+        <span>{handleMoney(totalPrice())} VND</span>
       </div>
       <Link className="link" to={Object.keys(user).length == 0 ? '/signin' : '/checkout'} onClick={() => { open(false) }}>
         <button className="checkoutBtn">PROCEED TO CHECKOUT</button>
       </Link>
-      <span className="reset" onClick={() => dispatch(resetCart())}>
+      <span className="reset" onClick={() => dispatch(resetCart({ idU: Object.keys(user) == 0 ? '' : user.info.khachhang.makh }))}>
         Reset Cart
       </span>
-    </div>
+    </div >
   );
 };
 

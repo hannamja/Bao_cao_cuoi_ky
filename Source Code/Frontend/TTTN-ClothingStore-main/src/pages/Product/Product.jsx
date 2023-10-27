@@ -10,46 +10,44 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import useFetch from "../../hooks/useFetch";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/cartReducer";
 import RatingSection from "../../components/RatingSection/RatingSection";
-import { Alert, Snackbar } from "@mui/material";
 import { handleMoney } from "../../utilities/handleMoney";
+import AlertMessage from "../../components/AlertMessage";
+import { Alert, Snackbar } from "@mui/material";
+import { redirectLogin } from "../../utilities/helpers";
+
+const initialMessage = {
+  content: "",
+  type: ""
+}
 
 const Product = () => {
   const id = useParams().id;
   const [selectedImg, setSelectedImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [idCtmh, setIdCtmh] = React.useState(null);
+
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const { data, loading, error } = useFetch(`/mathang/${id}`);
   const user = useSelector(state => state.user)
+
   const [hds, setHds] = useState(null)
-  const [openSuccess, setOpenSuccess] = React.useState(false);
   const [isOutOfStock, setIsOutOfStock] = useState(true);
-  // if (data?.ctMathangs[idCtmh]?.currentNumbeer  === 0) {
-  //   setIsOutOfStock(true);
-  // }else  {
-  //   setIsOutOfStock(false);
-  // }
+  const [openToast, setOpenToast] = useState(false);
+  const [message, setMessage] = useState(initialMessage);
   useEffect(() => {
-    console.log('stock in effect: ', data?.ctMathangs[idCtmh]?.currentNumbeer)
     if(data?.ctMathangs[idCtmh]?.currentNumbeer  == 0) {
       setIsOutOfStock(true);
+      setOpenToast(true);
     } else 
       setIsOutOfStock(false);
-  },[idCtmh]);
+  }, [idCtmh]);
 
-  console.log('idctmh: ', idCtmh);
-  console.log('outOfStock: ', isOutOfStock);
-  console.log('stock: ' ,data?.ctMathangs[idCtmh]?.currentNumbeer)
-  const handleCloseSuccess = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setOpenSuccess(false);
-  };
   useEffect(() => {
     if (Object.keys(user).length !== 0) {
       if (user.info.khachhang !== null) {
@@ -73,45 +71,53 @@ const Product = () => {
   }
 
   const handleAddToCart = () => {
+    if (!Object.keys(user).length) {
+      // setMessage({content: "Vui lòng đăng nhập!", type: "warning"})
+      return navigate(redirectLogin());
+    }
     if (idCtmh == null) {
-      alert('Vui lòng chọn phân loại mặt hàng')
+      // alert('Vui lòng chọn phân loại mặt hàng')
+      setMessage({content: "Vui lòng chọn phân loại mặt hàng!", type: "warning"})
       return
     }
     dispatch(
       addToCart({
-        id: data.mamh,
-        title: data.tenmh,
-        desc: data.mota,
-        img: data.hinhanhDTOs.length === 0 ? '' : data.hinhanhDTOs[0].duongdan,
-        "hoadonDTO": {
-          "khachhang": null,
-          "nhanvien": null,
-          "ngaytao": null,
-          "tongtien": null,
-          "chitietTrangThaiDTO": null,
-          "chitietHoadonDTO": null
-        },
-        "chitietMathangDTO": {
-          ...data.ctMathangs[idCtmh],
-          "mathangDTO": {
-            "mamh": data.mamh,
-            "chatlieuDTO": null,
-            "loaimhDTO": null,
-            "nhanhieuDTO": null,
-            "tenmh": data.tenmh,
-            "mota": null,
-            "trangthai": null,
-            "cachlam": null,
-            "phanloai": null,
-            "gia": null,
-            "hinhanhDTOs": null,
-            "ctMathangs": null
-          }
-        },
-        quantity,
-        price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * 0.1) * quantity,
+        idU: Object.keys(user) == 0 ? '' : user.info.khachhang.makh, item: {
+          id: data.mamh,
+          title: data.tenmh,
+          desc: data.mota,
+          img: data.hinhanhDTOs.length === 0 ? '' : data.hinhanhDTOs[0].duongdan,
+          "hoadonDTO": {
+            "khachhang": null,
+            "nhanvien": null,
+            "ngaytao": null,
+            "tongtien": null,
+            "chitietTrangThaiDTO": null,
+            "chitietHoadonDTO": null
+          },
+          "chitietMathangDTO": {
+            ...data.ctMathangs[idCtmh],
+            "mathangDTO": {
+              "mamh": data.mamh,
+              "chatlieuDTO": null,
+              "loaimhDTO": null,
+              "nhanhieuDTO": null,
+              "tenmh": data.tenmh,
+              "mota": null,
+              "trangthai": null,
+              "cachlam": null,
+              "phanloai": null,
+              "gia": null,
+              "hinhanhDTOs": null,
+              "ctMathangs": null
+            }
+          },
+          quantity,
+          price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * 0.1) * quantity,
+        }
       }))
-    setOpenSuccess(true)
+    // setOpenSuccess(true)
+    setMessage({content: "Đã thêm vào giỏ", type: "success"})
   }
   const handleChange = (event) => {
     setIdCtmh(event.target.value);
@@ -123,6 +129,11 @@ const Product = () => {
         "loading"
       ) : (
         <>
+        <Snackbar open={openToast} autoHideDuration={4000} onClose={() => setOpenToast(false)} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+  <Alert onClose={() => setOpenToast(false)} severity="info" sx={{ width: '100%' }}>
+  Xin lỗi quý khách, mặt hàng này hiện tại đã hết
+  </Alert>
+</Snackbar>
           <div className="left">
             <div className="top">
               <div className="images">
@@ -159,8 +170,8 @@ const Product = () => {
           </div>
           <div className="right">
             <h1>{data?.tenmh}</h1>
-            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `$${data.gia - data.gia * 0.1}`}</span>
-            <span className="price">${handleMoney(data?.gia)}</span>
+            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `${handleMoney(data.gia - data.gia * 0.1)} VND`}</span>
+            <span className="price">{handleMoney(data?.gia)} VND</span>
             <p>{data?.mota}</p>
             <Box sx={{ width: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
               <FormControl sx={{ width: 150 }}>
@@ -198,21 +209,23 @@ const Product = () => {
                 {quantity}
                 <button onClick={() => data.ctMathangs[idCtmh].currentNumbeer <= quantity ? setQuantity(quantity) : setQuantity((prev) => prev + 1)} disabled={idCtmh === null}>+</button>
               </div>
-              {
-                data.ctMathangs.length === 0 ?
-                  <button
-                    disabled={data.ctMathangs.length === 0}
-                    className="add"
-                  >
-                    <AddShoppingCartIcon /> OUT OF STOCK
-                  </button>
-                  : <button
-                    className="add"
-                    onClick={handleAddToCart}
-                  >
-                    <AddShoppingCartIcon /> ADD TO CART
-                  </button>
-              }
+
+                  {
+                    isOutOfStock ?
+                      <button
+                        disabled={isOutOfStock}
+                        className="add"
+                        style={{background: '#777'}}
+                      >
+                        <AddShoppingCartIcon /> OUT OF STOCK
+                      </button>
+                      : <button
+                        className="add"
+                        onClick={handleAddToCart}
+                      >
+                        <AddShoppingCartIcon /> ADD TO CART
+                      </button>
+                  }
               <div className="links">
                 <div className="item">
                   <FavoriteBorderIcon /> ADD TO WISH LIST
@@ -241,7 +254,7 @@ const Product = () => {
                       <button
                         disabled={isOutOfStock}
                         className="add"
-                        style={{background: '#777'}}
+                        style={{ background: '#777' }}
                       >
                         <AddShoppingCartIcon /> OUT OF STOCK
                       </button>
@@ -279,7 +292,7 @@ const Product = () => {
           </div>
         </>
       )}
-      <Snackbar open={openSuccess} autoHideDuration={6000} onClose={handleCloseSuccess}>
+      {/* <Snackbar open={openSuccess} autoHideDuration={6000} onClose={handleCloseSuccess}>
         <Alert
           onClose={handleCloseSuccess}
           severity="success"
@@ -287,7 +300,8 @@ const Product = () => {
         >
           Đã thêm vào giỏ
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
+      <AlertMessage message={message} setMessage={setMessage} />
     </div>
   );
 };

@@ -13,8 +13,9 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { login } from "../../redux/userReducer";
+import { addKH } from "../../redux/cartReducer";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import { useFormik } from "formik";
 import {
@@ -22,6 +23,7 @@ import {
   validateNotNull,
   validatePassword,
 } from "../../utilities/validation";
+import { useEffect } from "react";
 function Copyright(props) {
   return (
     <Typography
@@ -44,8 +46,13 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function SignInSide() {
+  const [params] = useSearchParams();
+  const next = params.get("next")
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const user = useSelector(state => state.user);
 
   const validate = (values) => {
     const returnErrors = {};
@@ -74,7 +81,10 @@ export default function SignInSide() {
         })
       )
         .unwrap((data) => data.json())
-        .then((data) => navigate(-1))
+        .then((data) => {
+          if (data.info.khachhang != null) 
+            dispatch(addKH({ idKH: data.info.khachhang.makh }))
+        })
         .catch(() => setOpen1(true));
     },
   });
@@ -88,6 +98,15 @@ export default function SignInSide() {
 
     setOpen1(false);
   };
+  useEffect(()=>{
+    if (Object.keys(user).length) {
+			if (next) {
+				navigate(next);
+			} else {
+				navigate("/");
+			}
+		}
+  }, [user, navigate, next])
   return (
     <ThemeProvider theme={defaultTheme}>
       <Grid container component="main" sx={{ height: "100vh" }}>

@@ -5,6 +5,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Grid from '@mui/material/Grid';
 import { useDispatch, useSelector } from 'react-redux';
+import { handleMoney } from '../../utilities/handleMoney';
 
 const addresses = ['1 MUI Drive', 'Reactville', 'Anytown', '99999', 'USA'];
 const payments = [
@@ -15,7 +16,9 @@ const payments = [
 ];
 
 export default function Review() {
-  const products = useSelector((state) => state.cart.products);
+  const user = useSelector((state) => state.user)
+  const cart = useSelector((state) => state.cart.carts);
+  const userCart = Object.keys(user) == 0 || user.info.khachhang == null ? cart.find(i => i.id == '') : cart.find(i => i.id == user.info.khachhang.makh)
   
   return (
     <React.Fragment>
@@ -23,19 +26,19 @@ export default function Review() {
         Order summary
       </Typography>
       <List disablePadding>
-        {products.map((product) => (
+        {userCart.products.map((product) => (
           <ListItem key={product.title} sx={{ py: 1, px: 0 }}>
             <ListItemText primary={product.title} secondary={product.desc} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="body2">Quantity: {product.quantity}</Typography>
-              <Typography variant="body2">Price: {product.price * product.quantity}</Typography>
+              <Typography variant="body2">Price: ${handleMoney(product.price * product.quantity)}</Typography>
             </div>
           </ListItem>
         ))}
         <ListItem sx={{ py: 1, px: 0 }}>
           <ListItemText primary="Total" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {products.reduce((total, ct) => total + ct.price*ct.quantity, 0)}
+            ${handleMoney(userCart.products.reduce((total, ct) => total + ct.price*ct.quantity, 0))}
           </Typography>
         </ListItem>
       </List>
