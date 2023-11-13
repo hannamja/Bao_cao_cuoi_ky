@@ -4,6 +4,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase'
 import BackspaceOutlinedIcon from '@mui/icons-material/BackspaceOutlined';
 import './SearchBox.scss'
+import { Link, useNavigate } from 'react-router-dom';
 
 
 const Search = styled('div')(({ theme }) => ({
@@ -49,7 +50,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
         [theme.breakpoints.up('sm')]: {
             width: '30ch',
             '&:focus': {
-                width: '40ch',
+                // width: '40ch',
                 borderBottom: '1px solid black'
             },
         },
@@ -58,20 +59,30 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 const SearchBox = () => {
     const [input, setInput] = useState('')
+    const navigate = useNavigate();
     const handldeChange = (e) => {
         setInput(e)
     }
     return (
         <div className='searchBox'>
             <Search>
-                <SearchIconWrapper>
-                    <SearchIcon />
-                </SearchIconWrapper>
+                <Link to={`/products/search?name=${input}`}>
+                    <SearchIconWrapper>
+                        <SearchIcon />
+                    </SearchIconWrapper>
+                </Link>
 
                 <StyledInputBase
                     placeholder="Search…"
                     inputProps={{ 'aria-label': 'search' }}
-                    onChange={(e) => { handldeChange(e.value) }}
+                    onChange={(e) => {
+                        handldeChange(e.target.value)
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && input) {
+                            navigate(`/products/search?name=${input}`)
+                        }
+                    }}
                     value={input}
                 />
                 <BackspaceIconWrapper onClick={() => { setInput('') }}>

@@ -24,6 +24,10 @@ const initialMessage = {
   type: ""
 }
 
+const errCode = {
+  'BELOW_1_AMOUNT': "Vui lòng mua ít nhất 1 sản phẩm!",
+  'PRODUCT_NOT_ENOUGH': "Số lượng tồn không đủ"
+}
 const Product = () => {
   const id = useParams().id;
   const [selectedImg, setSelectedImg] = useState(0);
@@ -41,10 +45,10 @@ const Product = () => {
   const [openToast, setOpenToast] = useState(false);
   const [message, setMessage] = useState(initialMessage);
   useEffect(() => {
-    if(data?.ctMathangs[idCtmh]?.currentNumbeer  == 0) {
+    if (data?.ctMathangs[idCtmh]?.currentNumbeer == 0) {
       setIsOutOfStock(true);
       setOpenToast(true);
-    } else 
+    } else
       setIsOutOfStock(false);
   }, [idCtmh]);
 
@@ -77,7 +81,7 @@ const Product = () => {
     }
     if (idCtmh == null) {
       // alert('Vui lòng chọn phân loại mặt hàng')
-      setMessage({content: "Vui lòng chọn phân loại mặt hàng!", type: "warning"})
+      setMessage({ content: "Vui lòng chọn phân loại mặt hàng!", type: "warning" })
       return
     }
     dispatch(
@@ -113,11 +117,11 @@ const Product = () => {
             }
           },
           quantity,
-          price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * 0.1) * quantity,
+          price: data.chitietKhuyenmaiDTO === null ? data.gia : (data.gia - data.gia * 0.01 * parseInt(data.chitietKhuyenmaiDTO.mucgiam.slice(0, data.chitietKhuyenmaiDTO.mucgiam.length))) * quantity,
         }
       }))
     // setOpenSuccess(true)
-    setMessage({content: "Đã thêm vào giỏ", type: "success"})
+    setMessage({ content: "Đã thêm vào giỏ", type: "success" })
   }
   const handleChange = (event) => {
     setIdCtmh(event.target.value);
@@ -129,11 +133,11 @@ const Product = () => {
         "loading"
       ) : (
         <>
-        <Snackbar open={openToast} autoHideDuration={4000} onClose={() => setOpenToast(false)} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
-  <Alert onClose={() => setOpenToast(false)} severity="info" sx={{ width: '100%' }}>
-  Xin lỗi quý khách, mặt hàng này hiện tại đã hết
-  </Alert>
-</Snackbar>
+          <Snackbar open={openToast} autoHideDuration={4000} onClose={() => setOpenToast(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+            <Alert onClose={() => setOpenToast(false)} severity="info" sx={{ width: '100%' }}>
+              Xin lỗi quý khách, mặt hàng này hiện tại đã hết
+            </Alert>
+          </Snackbar>
           <div className="left">
             <div className="top">
               <div className="images">
@@ -143,6 +147,9 @@ const Product = () => {
                   }
                   alt=""
                   onClick={(e) => setSelectedImg(0)}
+                  onError={(e) => {
+                    e.target.src = "/img/no-product.webp"
+                  }}
                 />
                 <img
                   src={
@@ -150,6 +157,9 @@ const Product = () => {
                   }
                   alt=""
                   onClick={(e) => setSelectedImg(0)}
+                  onError={(e) => {
+                    e.target.src = "/img/no-product.webp"
+                  }}
                 />
               </div>
               <div className="mainImg">
@@ -158,6 +168,9 @@ const Product = () => {
                     data?.hinhanhDTOs.length === 0 ? '' : data?.hinhanhDTOs[selectedImg].duongdan
                   }
                   alt=""
+                  onError={(e) => {
+                    e.target.src = "/img/no-product.webp"
+                  }}
                 />
 
               </div>
@@ -170,8 +183,8 @@ const Product = () => {
           </div>
           <div className="right">
             <h1>{data?.tenmh}</h1>
-            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `${handleMoney(data.gia - data.gia * 0.1)} VND`}</span>
-            <span className="price">{handleMoney(data?.gia)} VND</span>
+            <span className="price-1">{data?.chitietKhuyenmaiDTO === null ? '' : `${handleMoney(data.gia)} VND`}</span>
+            <span className="price">{data?.chitietKhuyenmaiDTO === null ? `${handleMoney(data.gia)}` : `${handleMoney(data?.gia - data?.gia * 0.01 * parseInt(data?.chitietKhuyenmaiDTO?.mucgiam.slice(0, data?.chitietKhuyenmaiDTO?.mucgiam.length)))}`} VND</span>
             <p>{data?.mota}</p>
             <Box sx={{ width: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
               <FormControl sx={{ width: 150 }}>
@@ -200,32 +213,36 @@ const Product = () => {
               <div className="quantity">
                 <button
                   onClick={() =>
-                    setQuantity((prev) => (prev === 1 ? 1 : prev - 1))
+                    quantity == 1 ? setMessage({ content: errCode.BELOW_1_AMOUNT, type: 'error' }) : setQuantity((prev) => (prev - 1))
                   }
                   disabled={idCtmh === null}
                 >
                   -
                 </button>
                 {quantity}
-                <button onClick={() => data.ctMathangs[idCtmh].currentNumbeer <= quantity ? setQuantity(quantity) : setQuantity((prev) => prev + 1)} disabled={idCtmh === null}>+</button>
+                <button onClick={() =>
+                  data.ctMathangs[idCtmh].currentNumbeer <= quantity ? setMessage({ content: errCode.PRODUCT_NOT_ENOUGH, type: 'error' }) : setQuantity((prev) => prev + 1)} disabled={idCtmh === null}
+                >
+                  +
+                </button>
               </div>
 
-                  {
-                    isOutOfStock ?
-                      <button
-                        disabled={isOutOfStock}
-                        className="add"
-                        style={{background: '#777'}}
-                      >
-                        <AddShoppingCartIcon /> OUT OF STOCK
-                      </button>
-                      : <button
-                        className="add"
-                        onClick={handleAddToCart}
-                      >
-                        <AddShoppingCartIcon /> ADD TO CART
-                      </button>
-                  }
+              {
+                isOutOfStock ?
+                  <button
+                    disabled={isOutOfStock}
+                    className="add"
+                    style={{ background: '#777' }}
+                  >
+                    <AddShoppingCartIcon /> OUT OF STOCK
+                  </button>
+                  : <button
+                    className="add"
+                    onClick={handleAddToCart}
+                  >
+                    <AddShoppingCartIcon /> ADD TO CART
+                  </button>
+              }
               <div className="links">
                 <div className="item">
                   <FavoriteBorderIcon /> ADD TO WISH LIST
@@ -240,14 +257,18 @@ const Product = () => {
                   <div className="quantity">
                     <button
                       onClick={() =>
-                        setQuantity((prev) => (prev === 1 ? 1 : prev - 1))
+                        quantity == 1 ? setMessage({ content: errCode.BELOW_1_AMOUNT, type: 'error' }) : setQuantity((prev) => (prev - 1))
                       }
                       disabled={idCtmh === null}
                     >
                       -
                     </button>
                     {quantity}
-                    <button onClick={() => data.ctMathangs[idCtmh].currentNumbeer <= quantity ? setQuantity(quantity) : setQuantity((prev) => prev + 1)} disabled={idCtmh === null}>+</button>
+                    <button onClick={() =>
+                      data.ctMathangs[idCtmh].currentNumbeer <= quantity ? setMessage({ content: errCode.PRODUCT_NOT_ENOUGH, type: 'error' }) : setQuantity((prev) => prev + 1)}
+                      disabled={idCtmh === null}>
+                      +
+                    </button>
                   </div>
                   {
                     isOutOfStock ?
@@ -291,7 +312,8 @@ const Product = () => {
             </div>
           </div>
         </>
-      )}
+      )
+      }
       {/* <Snackbar open={openSuccess} autoHideDuration={6000} onClose={handleCloseSuccess}>
         <Alert
           onClose={handleCloseSuccess}
@@ -302,7 +324,7 @@ const Product = () => {
         </Alert>
       </Snackbar> */}
       <AlertMessage message={message} setMessage={setMessage} />
-    </div>
+    </div >
   );
 };
 

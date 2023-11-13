@@ -11,7 +11,7 @@ const Cart = ({ open }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user)
   const cart = useSelector((state) => state.cart.carts);
-  const userCart = Object.keys(user) == 0 || user.info.khachhang == null ? cart.find(i => i.id == '') : cart.find(i => i.id == user.info.khachhang.makh)
+  const userCart = Object.keys(user).length == 0 || user.info.khachhang == null ? cart.find(i => i.id == '') : cart.find(i => i.id == user.info.khachhang.makh)
   const totalPrice = () => {
     let total = 0;
     userCart.products.forEach((item) => {
@@ -56,7 +56,7 @@ const Cart = ({ open }) => {
         <span>{handleMoney(totalPrice())} VND</span>
       </div>
       <Link className="link" to={Object.keys(user).length == 0 ? '/signin' : '/checkout'} onClick={() => { open(false) }}>
-        <button className="checkoutBtn">PROCEED TO CHECKOUT</button>
+        <button className="checkoutBtn" disabled={userCart.products.length == 0 ? true : false}>PROCEED TO CHECKOUT</button>
       </Link>
       <span className="reset" onClick={() => dispatch(resetCart({ idU: Object.keys(user) == 0 ? '' : user.info.khachhang.makh }))}>
         Reset Cart

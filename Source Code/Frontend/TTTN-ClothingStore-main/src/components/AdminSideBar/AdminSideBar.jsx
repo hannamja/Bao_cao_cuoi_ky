@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/userReducer.js'
 
 const AdminSideBar = ({ isOpen }) => {
+    const user = useSelector(state => state.user);
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
@@ -50,7 +51,8 @@ const AdminSideBar = ({ isOpen }) => {
                     <div className='user'>
                         <img src='/img/admin.png' alt='Admin'></img>
                         <div className="userInfo">
-                            <span className='name'>Nguyễn Văn A</span>
+                            <span className='name'>{user.info.nhanvien.tennv
+                                || "Unknown Staff"}</span>
                             <span className='role'>Admin</span>
                         </div>
                     </div>

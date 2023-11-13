@@ -19,11 +19,13 @@ import {
 } from "@mui/material";
 import "./Clothes.scss";
 import useFetch from "../../hooks/useFetch";
+import E404 from "../../components/404/E404";
 import { useParams } from "react-router-dom";
 import useFetchAdmin from "../../hooks/useFetchAdmin";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import { ClearOutlined } from "@mui/icons-material";
+import { ADD_CLOTHES_MESSAGE } from "../../constants/messages";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -50,7 +52,7 @@ const initialMessage = {
 
 const Clothes = ({ type }) => {
   const { id } = useParams();
-  const { data, loading } = useFetch(
+  const { data, loading, error } = useFetch(
     `${type === "add" ? `/mathang` : `/mathang/` + id}`
   );
 
@@ -93,27 +95,27 @@ const Clothes = ({ type }) => {
   const validate = () => {
     const errors = {};
     if (!cl) {
-      errors.cl = "Chưa chọn chất liệu!";
+      errors.cl = ADD_CLOTHES_MESSAGE.MATERIAL_REQUIRED;
     }
     if (!loai) {
-      errors.loai = "Chưa chọn loại!";
+      errors.loai = ADD_CLOTHES_MESSAGE.TYPE_REQUIRED;
     }
     if (!brand) {
-      errors.brand = "Chưa chọn thương hiệu!";
+      errors.brand = ADD_CLOTHES_MESSAGE.BRAND_REQUIRED;
     }
     if (!name) {
-      errors.name = "Tên không được để trống!";
+      errors.name = ADD_CLOTHES_MESSAGE.NAME_REQUIRED;
     }
     if (!tt) {
-      errors.tt = "Chưa chọn trạng thái!";
+      errors.tt = ADD_CLOTHES_MESSAGE.STATUS_REQUIRED;
     }
     if (!cachlam) {
-      errors.cachlam = "Chưa chọn cách làm!";
+      errors.cachlam = ADD_CLOTHES_MESSAGE.MAKING_REQUIRED;
     }
-    if (!price) {
-      errors.price = "Giá không được để trống!";
+    if (!Number.isInteger(parseInt(price))) {
+      errors.price = ADD_CLOTHES_MESSAGE.PRICE_REQUIRED;
     } else if (parseFloat(price) < 0) {
-      errors.price = "Giá không được nhỏ hơn 0";
+      errors.price = ADD_CLOTHES_MESSAGE.PRICE_INVALID;
     }
     return errors;
   };
@@ -160,6 +162,7 @@ const Clothes = ({ type }) => {
         hinhanhDTOs: haRows,
         ctMathangs: ctmhRows,
       };
+      console.log(sp);
 
       fetch("http://localhost:8081/api/mathang", {
         method: "POST",
@@ -211,6 +214,7 @@ const Clothes = ({ type }) => {
         hinhanhDTOs: haRows,
         ctMathangs: ctmhRows,
       };
+      console.log(sp);
 
       fetch("http://localhost:8081/api/mathang", {
         method: "POST",
@@ -239,7 +243,7 @@ const Clothes = ({ type }) => {
 
   useEffect(() => {
     if (data) {
-      if (type !== "add") {
+      if (type !== "add" && data?.status != 404) {
         setMamh(data.mamh);
         setLoai(data.loaimhDTO.maloaimh);
         setName(data.tenmh);
@@ -272,20 +276,29 @@ const Clothes = ({ type }) => {
   };
 
   const handleAddCtmh = (i) => {
-    if (
-      !i.colorDTO ||
-      !i.sizeDTO ||
-      !Number.isInteger(parseInt(i.currentNumbeer))
-    ) {
+    if (!i.colorDTO) {
       setMessage({
-        content: "Vui lòng nhập đúng đủ màu, kích thước, số lượng!",
+        content: ADD_CLOTHES_MESSAGE.COLOR_REQUIRED,
         type: "error",
       });
       return;
     }
-    if (parseInt(i.currentNumbeer) < 0) {
+    if (!i.sizeDTO) {
       setMessage({
-        content: "Số lượng không được nhỏ hơn 0!",
+        content: ADD_CLOTHES_MESSAGE.SIZE_REQUIRED,
+        type: "error",
+      });
+      return;
+    }
+    if (!Number.isInteger(parseInt(i.currentNumbeer))) {
+      setMessage({
+        content: ADD_CLOTHES_MESSAGE.QUANTITY_REQUIRED,
+        type: "error",
+      });
+      return;
+    } else if (parseInt(i.currentNumbeer) < 0) {
+      setMessage({
+        content: ADD_CLOTHES_MESSAGE.QUANTITY_INVALID,
         type: "error",
       });
       return;
@@ -315,7 +328,7 @@ const Clothes = ({ type }) => {
     setSl(0);
   };
 
-  return clData.loading || brandData.loading || typeData.loading ? (
+  return error || data?.status == 404 ? <E404 /> : clData.loading || brandData.loading || typeData.loading ? (
     "loading..."
   ) : (
     <React.Fragment>
@@ -704,8 +717,8 @@ const Clothes = ({ type }) => {
               onClick={
                 type === "add"
                   ? () => {
-                      handleAdd();
-                    }
+                    handleAdd();
+                  }
                   : handleMod
               }
             >

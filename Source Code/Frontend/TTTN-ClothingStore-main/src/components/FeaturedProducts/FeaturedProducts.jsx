@@ -1,7 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import Card from "../Card/Card";
 import "./FeaturedProducts.scss";
-import OwlCarousel  from "react-owl-carousel"
+import OwlCarousel from "react-owl-carousel"
 import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
 // import useFetch from "../../hooks/useFetch";
@@ -31,12 +31,16 @@ const FeaturedProducts = ({ type, dataSet }) => {
         </p>
       </div>
       <div className="bottom">
-        <OwlCarousel className='owl-theme' {...owlOptions}>
-            {dataSet?.map((item) => <Card item={item} key={item.mamh} />)}
-        </OwlCarousel>
+        {
+          dataSet.length <= 2 ? dataSet?.map((item) => <Card item={item} key={item.mamh} />)
+            : <OwlCarousel className='owl-theme' {...owlOptions}>
+              {dataSet?.map((item) => <Card item={item} key={item.mamh} />)}
+            </OwlCarousel>
+        }
+
       </div>
     </div>
   );
 };
 
-export default FeaturedProducts;
+export default memo(FeaturedProducts);

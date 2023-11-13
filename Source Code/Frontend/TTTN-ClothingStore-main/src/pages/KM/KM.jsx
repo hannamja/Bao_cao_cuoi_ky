@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Table from '@mui/material/Table';
@@ -14,10 +14,10 @@ import './KM.scss'
 import { useParams } from 'react-router-dom';
 import useFetchAdmin from '../../hooks/useFetchAdmin';
 import { useSelector } from 'react-redux';
-import useFetch from '../../hooks/useFetch';
 import { ClearOutlined } from '@mui/icons-material';
 import AlertMessage from "../../components/AlertMessage";
 import { dateToString } from '../../utilities/helpers';
+import E404 from '../../components/404/E404';
 
 const initialMessage = {
     content: "",
@@ -27,11 +27,10 @@ const initialMessage = {
 const KM = ({ type }) => {
     const { id } = useParams()
     const { data, loading, error } = useFetchAdmin(`${type === 'add' ? `/km` : `/km/` + id}`);
-
     const currentDate = new Date().toISOString().slice(0, 10);
 
     const user = useSelector(state => state.user)
-    const mh = useFetch('/mathang')
+    const mh = useFetchAdmin('/mathangAd')
 
     const [message, setMessage] = useState(initialMessage);
     const [value, setValue] = useState(null);
@@ -44,8 +43,9 @@ const KM = ({ type }) => {
     const [mucgiamInput, setMucgiamInput] = useState(null);
 
     useEffect(() => {
+        console.log(data)
         if (data) {
-            if (type !== 'add') {
+            if (type !== 'add' && data?.status != 404) {
                 setBd(dateToString(parseInt(data?.ngaybd)))
                 setKt(dateToString(parseInt(data?.ngaykt)))
                 setLd(data.lydo)
@@ -56,15 +56,29 @@ const KM = ({ type }) => {
 
     const handleAdd = () => {
         if (!ld.trim()) {
-            setMessage({content: "Vui lòng nhập lý do!", type: "warning"})
+            setMessage({ content: "Vui lòng nhập lý do!", type: "warning" })
             return;
         }
         if (!bd) {
-            setMessage({content: "Vui lòng chọn ngày bắt đầu!", type: "warning"})
+            setMessage({ content: "Vui lòng chọn ngày bắt đầu!", type: "warning" })
             return;
         }
         if (!kt) {
-            setMessage({content: "Vui lòng chọn ngày kết thúc!", type: "warning"})
+            setMessage({ content: "Vui lòng chọn ngày kết thúc!", type: "warning" })
+            return;
+        }
+        console.log(new Date(bd).getDate())
+        if (new Date(bd).getDate() < new Date().getDate()) {
+
+            setMessage({ content: "Ngày bắt đầu phải bằng hoặc lớn hơn ngày hiện tại!", type: "warning" })
+            return;
+        }
+        if (new Date(kt).getDate() < new Date().getDate()) {
+            setMessage({ content: "Ngày kết thúc phải bằng hoặc lớn hơn ngày hiện tại!", type: "warning" })
+            return;
+        }
+        if (new Date(bd).getDate() > new Date(kt).getDate()) {
+            setMessage({ content: "Ngày bắt đầu phải bằng hoặc lớn hơn ngày kết thúc!", type: "warning" })
             return;
         }
         const km = {
@@ -75,36 +89,36 @@ const KM = ({ type }) => {
             "ctKhuyenmais": ctkmRows
         }
         fetch("http://localhost:8081/api/km", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + user.token,
-          },
-          body: JSON.stringify(km),
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + user.token,
+            },
+            body: JSON.stringify(km),
         })
-          .then((res) => res.json())
-          .then((data) => {
-            setLd("");
-            setBd(`${type === "add" ? currentDate : ""}`);
-            setKt(currentDate);
-            setCtkmRows([])
-            setMessage({
-              content: "Thêm khuyến mãi thành công!",
-              type: "success",
-            });
-          })
-          .catch(()=>{
-            setMessage({
-                content: "Thêm khuyến mãi thất bại!",
-                type: "error",
-              });
-          })
+            .then((res) => res.json())
+            .then((data) => {
+                setLd("");
+                setBd(`${type === "add" ? currentDate : ""}`);
+                setKt(currentDate);
+                setCtkmRows([])
+                setMessage({
+                    content: "Thêm khuyến mãi thành công!",
+                    type: "success",
+                });
+            })
+            .catch(() => {
+                setMessage({
+                    content: "Thêm khuyến mãi thất bại!",
+                    type: "error",
+                });
+            })
     }
 
     const handleMod = () => {
         if (!ld.trim()) {
-            setMessage({content: "Vui lòng nhập lý do!", type: "warning"})
+            setMessage({ content: "Vui lòng nhập lý do!", type: "warning" })
             return;
         }
         const km = {
@@ -117,27 +131,27 @@ const KM = ({ type }) => {
         }
 
         fetch("http://localhost:8081/api/km", {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + user.token,
-          },
-          body: JSON.stringify(km),
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + user.token,
+            },
+            body: JSON.stringify(km),
         })
-          .then((res) => res.json())
-          .then((data) => {
-            setMessage({
-              content: "Sửa khuyến mãi thành công!",
-              type: "success",
-            });
-          })
-          .catch(()=>{
-            setMessage({
-                content: "Sửa khuyến mãi thất bại!",
-                type: "error",
-              });
-          })
+            .then((res) => res.json())
+            .then((data) => {
+                setMessage({
+                    content: "Sửa khuyến mãi thành công!",
+                    type: "success",
+                });
+            })
+            .catch(() => {
+                setMessage({
+                    content: "Sửa khuyến mãi thất bại!",
+                    type: "error",
+                });
+            })
     }
 
 
@@ -146,6 +160,7 @@ const KM = ({ type }) => {
         setCtkmRows(filtered)
     }
     const handleAddCtmh = (i) => {
+        console.log(i);
         let filtered = ctkmRows.filter(item => item.id.mamh === i.id.mamh)
 
         if (filtered.length > 0) {
@@ -157,7 +172,7 @@ const KM = ({ type }) => {
         setValue(null);
         setMucgiam(null);
     }
-    return (
+    return (data?.status == 404 ? <E404 /> :
         <>
             <Grid container spacing={3} style={{ margin: '50px', alignItems: 'center' }}>
                 <Grid xs={12} sm={12}>
@@ -179,7 +194,7 @@ const KM = ({ type }) => {
                         label="Lý do"
                         fullWidth
                         autoComplete="given-name"
-                        inputProps={{maxLength: 45}}
+                        inputProps={{ maxLength: 45 }}
                         variant="standard"
                         value={ld}
                         onChange={(e) => setLd(e.target.value)}
@@ -217,7 +232,7 @@ const KM = ({ type }) => {
                     <span>Ngày kết thúc</span>
                     <TextField
                         required
-                        disabled = {!bd || type === "add" ? false : true}
+                        disabled={!bd || type === "add" ? false : true}
                         id="firstName"
                         name="firstName"
                         fullWidth
@@ -303,17 +318,17 @@ const KM = ({ type }) => {
                 <Grid item xs={12}>
                     <Button variant="outlined" onClick={() => {
                         if (!value) {
-                            setMessage({content: "vui lòng chọn sản phẩm!", type: "warning"})
+                            setMessage({ content: "vui lòng chọn sản phẩm!", type: "warning" })
                             return
                         }
                         if (!mucgiam) {
-                            setMessage({content: "Vui lòng chọn mức giảm!", type: "warning"})
+                            setMessage({ content: "Vui lòng chọn mức giảm!", type: "warning" })
                             return;
                         }
                         handleAddCtmh({
                             id: {
                                 "mamh": value.mamh
-                            }, 
+                            },
                             mucgiam: mucgiam
                         });
                     }}>

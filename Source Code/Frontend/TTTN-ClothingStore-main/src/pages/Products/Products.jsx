@@ -11,14 +11,16 @@ const Products = () => {
   const [maxPrice, setMaxPrice] = useState(1000);
   const [sort, setSort] = useState(null);
   const [selectedSubCats, setSelectedSubCats] = useState([]);
-  const [sortData, setSortData] = useState(null)
-  const { data, loading, error, setData } = useFetch(
+  const [sortData, setSortData] = useState([])
+
+  const { data, loading, error } = useFetch(
     `/mathang/getByLoai/${catId}`
   );
   const sizeData = useFetch(`/size`);
 
   useEffect(() => {
     if (data) setSortData(data)
+    if (error) setSortData([])
   }, [loading])
 
 
@@ -43,14 +45,14 @@ const Products = () => {
 
   const priceFilter = (typeSort) => {
     if (typeSort == 'asc') {
-      sortData.sort((a, b) => a.gia - b.gia)
+      sortData?.sort((a, b) => a.gia - b.gia)
     }
     else if (typeSort == 'desc') {
-      sortData.sort((a, b) => b.gia - a.gia)
+      sortData?.sort((a, b) => b.gia - a.gia)
     }
   }
   return (
-    loading || sizeData.loading ? 'loading...' :
+    loading || sizeData.loading || sortData.length == 0 ? 'loading...' :
       <div className="products">
         <div className="left">
           <div className="filterItem">
@@ -62,7 +64,7 @@ const Products = () => {
               <FormGroup>
                 {
                   sizeData.data?.map((i, idx) =>
-                    <FormControlLabel key={idx} control={<Checkbox defaultChecked={idx == 0 ? true : false} onChange={handleChange} />} label={i.tensize} value={i.masize} />
+                    <FormControlLabel key={idx} control={<Checkbox onChange={handleChange} />} label={i.tensize} value={i.masize} />
                   )
                 }
               </FormGroup>
@@ -111,10 +113,10 @@ const Products = () => {
             src="https://images.pexels.com/photos/1074535/pexels-photo-1074535.jpeg?auto=compress&cs=tinysrgb&w=1600"
             alt=""
           />
-          <List data={sortData} />
+          <List data={[...sortData]} size={selectedSubCats} />
         </div>
       </div>
-  );
+  )
 };
 
 export default Products;
